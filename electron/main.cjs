@@ -4,6 +4,7 @@ const { app, BrowserWindow, globalShortcut, ipcMain, Menu, session, shell } = re
 const APP_NAME = `ReYohoho Desktop ${app.getVersion()}`
 const MAIN_SITE_URL = process.env.REYOHOHO_SITE_URL || 'https://dav2010id.github.io/reyohoho/'
 const KINOHUB_REFERER = 'https://on.kinohub.vip/'
+const SANSA_ORIGIN = 'https://sansa.stravers.live'
 
 let mainWindow = null
 let deepLinkUrl = null
@@ -32,13 +33,19 @@ const installRequestHeaderPatches = () => {
 
     try {
       const requestUrl = new URL(details.url)
+      const hostname = requestUrl.hostname
 
-      if (requestUrl.hostname === 'sansa.stravers.live') {
+      if (hostname === 'sansa.stravers.live' || hostname.endsWith('.sansa.stravers.live')) {
         headerPatch.Referer = KINOHUB_REFERER
 
         if (details.resourceType !== 'subFrame') {
           headerPatch.Origin = requestUrl.origin
         }
+      }
+
+      if (hostname === 'rtbcdn.cloud' || hostname.endsWith('.rtbcdn.cloud')) {
+        headerPatch.Referer = KINOHUB_REFERER
+        headerPatch.Origin = SANSA_ORIGIN
       }
     } catch {
       // Ignore non-standard URLs.
