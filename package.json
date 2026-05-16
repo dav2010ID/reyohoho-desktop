@@ -1,0 +1,48 @@
+{
+  "name": "reyohoho-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "electron/main.cjs",
+  "description": "ReYohoho desktop wrapper",
+  "author": "ReYohoho",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --publish=never"
+  },
+  "devDependencies": {
+    "electron": "^34.0.1",
+    "electron-builder": "^26.0.6"
+  },
+  "build": {
+    "appId": "ru.reyohoho.desktop",
+    "productName": "ReYohoho",
+    "electronVersion": "34.0.1",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "protocols": [
+      {
+        "name": "ReYohoho",
+        "schemes": [
+          "reyohoho"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icons/icon-512x512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
