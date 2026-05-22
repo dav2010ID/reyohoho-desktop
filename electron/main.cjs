@@ -27,6 +27,11 @@ const mergeHeaders = (headers, patch) => {
   }
 }
 
+const getHeader = (headers, name) => {
+  const found = Object.entries(headers || {}).find(([key]) => key.toLowerCase() === name.toLowerCase())
+  return found?.[1] || ''
+}
+
 const installRequestHeaderPatches = () => {
   session.defaultSession.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, callback) => {
     const headerPatch = {}
@@ -34,16 +39,11 @@ const installRequestHeaderPatches = () => {
     try {
       const requestUrl = new URL(details.url)
       const hostname = requestUrl.hostname
+      const oldReferer = getHeader(details.requestHeaders, 'Referer')
+      const targetIsSansa = hostname === 'sansa.stravers.live' || hostname.endsWith('.sansa.stravers.live')
+      const fromSansa = oldReferer.includes('sansa.stravers.live')
 
-      if (hostname === 'sansa.stravers.live' || hostname.endsWith('.sansa.stravers.live')) {
-        headerPatch.Referer = KINOHUB_REFERER
-
-        if (details.resourceType !== 'subFrame') {
-          headerPatch.Origin = requestUrl.origin
-        }
-      }
-
-      if (hostname === 'rtbcdn.cloud' || hostname.endsWith('.rtbcdn.cloud')) {
+      if (targetIsSansa || fromSansa) {
         headerPatch.Referer = KINOHUB_REFERER
         headerPatch.Origin = SANSA_ORIGIN
       }
@@ -154,6 +154,7 @@ const createWindow = async () => {
     backgroundColor: '#000000',
     icon: path.join(__dirname, '..', 'public', 'icons', 'icon-512x512.png'),
     show: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -166,7 +167,8 @@ const createWindow = async () => {
   if (process.platform === 'darwin') {
     Menu.setApplicationMenu(createMenu())
   } else {
-    mainWindow.setMenu(createMenu())
+    mainWindow.setMenu(null)
+    mainWindow.setMenuBarVisibility(false)
   }
 
   mainWindow.once('ready-to-show', () => {

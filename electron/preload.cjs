@@ -1,5 +1,53 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
+const DESKTOP_CHROME_STYLE_ID = 'reyohoho-desktop-chrome-style'
+
+const installDesktopChrome = () => {
+  if (!document.getElementById(DESKTOP_CHROME_STYLE_ID)) {
+    const style = document.createElement('style')
+    style.id = DESKTOP_CHROME_STYLE_ID
+    style.textContent = `
+      :root {
+        scrollbar-color: #3a3a3f #070707;
+        scrollbar-width: thin;
+      }
+
+      *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: #070707;
+      }
+
+      *::-webkit-scrollbar-thumb {
+        min-height: 48px;
+        background: #3a3a3f;
+        border: 2px solid #070707;
+        border-radius: 999px;
+      }
+
+      *::-webkit-scrollbar-thumb:hover {
+        background: #55555d;
+      }
+
+      *::-webkit-scrollbar-corner {
+        background: #070707;
+      }
+    `
+    document.head.appendChild(style)
+  }
+}
+
+const installDesktopChromeWhenReady = () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installDesktopChrome, { once: true })
+  } else {
+    installDesktopChrome()
+  }
+}
+
 const showToast = (message) => {
   const text = String(message || '').trim()
   if (!text) return
@@ -35,6 +83,8 @@ const showToast = (message) => {
     render()
   }
 }
+
+installDesktopChromeWhenReady()
 
 ipcRenderer.on('desktop-toast', (_event, message) => showToast(message))
 
