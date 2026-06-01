@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JacRed Torrents</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #101010;
+        color: #f2f2f2;
+        font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 14px 18px;
+        border-bottom: 1px solid #2a2a2a;
+        background: #161616;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .search {
+        display: grid;
+        grid-template-columns: 1fr 140px 120px;
+        gap: 8px;
+      }
+
+      input,
+      select,
+      button {
+        height: 38px;
+        border: 1px solid #333;
+        border-radius: 6px;
+        background: #0d0d0d;
+        color: #fff;
+        font: inherit;
+      }
+
+      input,
+      select {
+        padding: 0 10px;
+      }
+
+      button {
+        padding: 0 12px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #242424;
+      }
+
+      .primary {
+        background: #e8e8e8;
+        color: #111;
+      }
+
+      .primary:hover {
+        background: #fff;
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      main {
+        padding: 16px 18px 24px;
+      }
+
+      .status {
+        margin-bottom: 12px;
+        color: #bdbdbd;
+      }
+
+      .result {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid #292929;
+        border-radius: 8px;
+        background: #171717;
+        margin-bottom: 10px;
+      }
+
+      .title {
+        font-weight: 650;
+        margin-bottom: 6px;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        color: #aaa;
+        font-size: 12px;
+      }
+
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 118px;
+      }
+
+      .empty,
+      .error {
+        padding: 18px;
+        border: 1px solid #292929;
+        border-radius: 8px;
+        background: #171717;
+      }
+
+      .error {
+        color: #ffb4b4;
+      }
+
+      @media (max-width: 760px) {
+        .search,
+        .filters,
+        .result {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          flex-direction: row;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>JacRed Torrents</h1>
+      <div class="search">
+        <input id="query" placeholder="Название, IMDb/KP, сериал или фильм">
+        <select id="sort">
+          <option value="sid">По сидам</option>
+          <option value="pir">По пирам</option>
+          <option value="size">По размеру</option>
+          <option value="create">По дате</option>
+          <option value="availability">По доступности</option>
+        </select>
+        <button class="primary" id="searchButton">Найти</button>
+      </div>
+      <div class="filters">
+        <input id="include" placeholder="Уточнить">
+        <input id="exclude" placeholder="Исключить">
+        <select id="quality">
+          <option value="">Любое качество</option>
+          <option value="480">480p</option>
+          <option value="720">720p</option>
+          <option value="1080">1080p</option>
+          <option value="2160">2160p</option>
+        </select>
+        <input id="year" placeholder="Год">
+      </div>
+    </header>
+    <main>
+      <div class="status" id="status">Введите запрос для поиска. Потоковая передача через серверы ReYohoho не используется.</div>
+      <div id="results"></div>
+    </main>
+
+    <script>
+      const { ipcRenderer } = require('electron')
+
+      let apiBase = 'https://api.jacred.su'
+
+      const statusEl = document.getElementById('status')
+      const resultsEl = document.getElementById('results')
+
+      const formatCount = (value) => Number.isFinite(Number(value)) ? Number(value) : 0
+
+      const createResult = (item) => {
+        const row = document.createElement('div')
+        row.className = 'result'
+
+        const info = document.createElement('div')
+
+        const title = document.createElement('div')
+        title.className = 'title'
+        title.textContent = item.title || 'Без названия'
+
+        const meta = document.createElement('div')
+        meta.className = 'meta'
+        meta.textContent = [
+          item.tracker,
+          item.size_name,
+          `S: ${formatCount(item.seeders)}`,
+          `P: ${formatCount(item.peers)}`
+        ].filter(Boolean).join('  |  ')
+
+        info.append(title, meta)
+
+        const actions = document.createElement('div')
+        actions.className = 'actions'
+
+        const openButton = document.createElement('button')
+        openButton.className = 'primary'
+        openButton.textContent = 'Magnet'
+        openButton.disabled = !item.magnet
+        openButton.addEventListener('click', () => {
+          ipcRenderer.send('open-external-url', item.magnet)
+        })
+
+        const copyButton = document.createElement('button')
+        copyButton.textContent = 'Copy'
+        copyButton.disabled = !item.magnet
+        copyButton.addEventListener('click', () => {
+          ipcRenderer.send('copy-text', item.magnet)
+          statusEl.textContent = 'Magnet copied.'
+        })
+
+        const sourceButton = document.createElement('button')
+        sourceButton.textContent = 'Source'
+        sourceButton.disabled = !item.source_url
+        sourceButton.addEventListener('click', () => {
+          ipcRenderer.send('open-external-url', item.source_url)
+        })
+
+        actions.append(openButton, copyButton, sourceButton)
+        row.append(info, actions)
+
+        return row
+      }
+
+      const getSearchUrl = () => {
+        const params = new URLSearchParams()
+        params.set('query', document.getElementById('query').value.trim())
+        params.set('sort', document.getElementById('sort').value)
+        params.set('limit', '50')
+
+        for (const id of ['include', 'exclude', 'quality', 'year']) {
+          const value = document.getElementById(id).value.trim()
+          if (value) params.set(id, value)
+        }
+
+        return `${apiBase.replace(/\/+$/, '')}/api/v1/search?${params.toString()}`
+      }
+
+      const search = async () => {
+        const query = document.getElementById('query').value.trim()
+        if (query.length < 2) {
+          statusEl.textContent = 'Минимум 2 символа.'
+          return
+        }
+
+        statusEl.textContent = 'Поиск...'
+        resultsEl.textContent = ''
+
+        try {
+          const response = await fetch(getSearchUrl())
+          if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+
+          const data = await response.json()
+          const items = Array.isArray(data.results) ? data.results : Array.isArray(data.items) ? data.items : []
+
+          if (items.length === 0) {
+            resultsEl.innerHTML = '<div class="empty">Ничего не найдено.</div>'
+            statusEl.textContent = 'Готово.'
+            return
+          }
+
+          statusEl.textContent = `Найдено: ${items.length}`
+          for (const item of items) {
+            resultsEl.appendChild(createResult(item))
+          }
+        } catch (error) {
+          resultsEl.innerHTML = `<div class="error">Ошибка поиска: ${String(error.message || error)}</div>`
+          statusEl.textContent = 'Ошибка.'
+        }
+      }
+
+      document.getElementById('searchButton').addEventListener('click', search)
+      document.getElementById('query').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') search()
+      })
+
+      ipcRenderer.on('torrent-init', (_event, data) => {
+        apiBase = data.apiBase || apiBase
+        if (data.query) {
+          document.getElementById('query').value = data.query.replace(/\s*\|\s*ReYohoho.*$/i, '').trim()
+          search()
+        }
+      })
+    </script>
+  </body>
+</html>
