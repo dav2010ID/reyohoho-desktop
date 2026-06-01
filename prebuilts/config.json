@@ -1,0 +1,25 @@
+{
+  "main_site_url": "https://dav2010id.github.io/reyohoho/",
+  "mirrors": [
+    "https://dav2010id.github.io/reyohoho/",
+    "http://127.0.0.1:8000/"
+  ],
+  "jacred_api_url": "https://api.jacred.su",
+  "header_patches": [
+    {
+      "host": "sansa.stravers.live",
+      "referer": "https://on.kinohub.vip/",
+      "origin": "https://sansa.stravers.live",
+      "patch_descendants": true
+    },
+    {
+      "host": "theatre.stravers.live",
+      "origin": "https://theatre.stravers.live",
+      "patch_descendants": false
+    }
+  ],
+  "header_patch_host": "sansa.stravers.live",
+  "header_patch_referer": "https://on.kinohub.vip/",
+  "header_patch_origin": "https://sansa.stravers.live",
+  "url_handler_deny": "https://dav2010id.github.io/reyohoho/"
+}
