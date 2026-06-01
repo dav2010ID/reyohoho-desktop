@@ -1,6 +1,6 @@
 {
   "name": "reyohoho-desktop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "commonjs",
   "main": "electron/main.cjs",
@@ -8,7 +8,10 @@
   "author": "ReYohoho",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win --publish=never"
+    "build": "electron-builder --win --publish=never",
+    "build:win": "electron-builder --win --publish=never",
+    "build:mac": "electron-builder --mac --x64 --arm64 --publish=never",
+    "build:linux": "electron-builder --linux --publish=never"
   },
   "devDependencies": {
     "electron": "^34.0.1",
@@ -18,11 +21,17 @@
     "appId": "ru.reyohoho.desktop",
     "productName": "ReYohoho",
     "electronVersion": "34.0.1",
+    "publish": {
+      "provider": "github",
+      "owner": "dav2010ID",
+      "repo": "reyohoho-desktop"
+    },
     "directories": {
       "output": "release"
     },
     "files": [
       "electron/**/*",
+      "prebuilts/**/*",
       "public/**/*",
       "package.json"
     ],
@@ -38,11 +47,34 @@
       "target": "nsis",
       "icon": "public/icons/icon-512x512.png"
     },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icons/icon-512x512.png",
+      "artifactName": "ReYohoho.Setup.${version}_${arch}.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "AudioVideo",
+      "icon": "public/icons/icon-512x512.png",
+      "artifactName": "ReYohoho.Setup.${version}_${arch}.${ext}",
+      "desktop": {
+        "entry": {
+          "Name": "ReYohoho",
+          "Terminal": "false",
+          "Type": "Application",
+          "MimeType": "x-scheme-handler/reyohoho"
+        }
+      }
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     }
+  },
+  "dependencies": {
+    "@ghostery/adblocker-electron": "^2.17.3",
+    "electron-updater": "^6.8.3"
   }
 }
