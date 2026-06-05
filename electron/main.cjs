@@ -514,7 +514,9 @@ const createWindow = async () => {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      devTools: true
+      devTools: true,
+      // Electron-only player controls need access to third-party player iframes.
+      webSecurity: false
     }
   })
 
